@@ -6,17 +6,22 @@ from encoder import *
 @dataclass
 class State:
     image: PIL_Image
+    file_name: str
     display_message: str
-    encoded_messages: list[str]
+    current_message: str
+    encoded_image: list[int]
 
 @route
 def index(state: State) -> Page:
-    return Page(state, ["Please select a 'png' file to get started!.", FileUpload("new_image", accept="image/png"), Button("Display", display_image)])
+    raw_data = FileUpload("encoded_file", accept="image/png")
+    state.file_name = raw_data.name
+
+    return Page(state, ["Please select a 'png' file to get started!.", raw_data, Button("Display", display_image)])
 
 @route
-def display_image(state : State, new_image: bytes) -> Page:
-
-    state.image = PIL_Image.open(io.BytesIO(new_image)).convert('RGB')
+def display_image(state : State, encoded_file: bytes) -> Page:
+    state.image = PIL_Image.open(io.BytesIO(encoded_file)).convert('RGB')
+    
     return Page(state, ["Here is your image! Would you like to encode a message, or decode one from the image?", Image(state.image), 
                         Button("Back", index), Button("Decode message", decode), Button("Encode a message", encode)])
 
@@ -27,16 +32,22 @@ def encode(state: State) -> Page:
 
 @route
 def encode_message(state: State, message: str):
-    state.encoded_messages.append(message)
+    state.current_message = message
+    users_message = state.current_message 
+    message_with_header = prepend_header(users_message)
+    binary_string = message_to_binary(message_with_header)  # convert the full message to a binary string    
+    state.image = hide_bits(state.image, binary_string) # encode the message into the image
+    
     return Page(state, ["Would you like to save your file?", Button("Save", save_message), Button("Home Page", index)])
 
 @route
 def save_message(state: State):
-    img = state.image
-    width, length = None
-    max_size = width * length
-
-    state.image = encode_message(max_size, img)
+    
+    # save the updated image with a new file name
+    new_file_name = "1_" + state.file_name  + ".png" # format of 1 + old filename (1 represents green channel)  
+    state.image.save(new_file_name, "PNG") 
+    
+    return Page(state, ["Your file has been saved!", "Would you like to encode enother message?", Button("Encode", encode), Button("Home Page", index)])
 
 @route
 def decode(state: State) -> Page:
@@ -46,4 +57,5 @@ def decode(state: State) -> Page:
     return Page(state, ["Your file has the message: ", get_encoded_message(green), Button("Return to home page", index)])
 
 hide_debug_information()
-start_server(State(None, "Hello, and welcome to my steganography site! Would you like to upload an image?", []))
+
+start_server(State(None, None, "Hello, and welcome to my steganography site! Would you like to upload an image?", None, []))

@@ -1,8 +1,4 @@
-from bakery import assert_equal
 from PIL import Image as PIL_Image
-import tkinter as tk
-import os
-
 def get_message(characters: int) -> str:
     message = input("Please enter your secret message. \n")
 
@@ -96,36 +92,3 @@ def hide_bits(image: PIL_Image, binary: str) -> PIL_Image:
             current_bit += 1
 
     return image
-
-
-
-def encode_message(max_chars: int, file: PIL_Image) -> str:
-    '''
-    main function for hiding a message in an image file
-    Args:
-        max_chars (int) -> represents the maximum number of characters allowed to be hidden
-    Return:
-        str: name of the new file where the message is hidden
-    '''    
-    
-    image = PIL_Image.open(file).convert('RGB')  # get RGB Pillow Image format of the image file
- 
-    # after you have defined:
-    #      get_message, prepend_header, message_to_binary   
-   
-    users_message = get_message(max_chars)  # lets the user enter a message 
-    
-    message_with_header = prepend_header(users_message)  #prepends the header to the users message
-     
-    binary_string = message_to_binary(message_with_header)  # convert the full message to a binary string    
-   
-    # after you have defined:
-    #      hide_bits, new_color_value
-       
-    image = hide_bits(image, binary_string) # encode the message into the image
-   
-    # save the updated image with a new file name
-    new_file_name = "1_" + image # format of 1 + old filename (1 represents green channel)  
-    image.save(new_file_name, "PNG") 
-      
-    return new_file_name
